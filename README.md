@@ -39,7 +39,7 @@ Part 1 also computes delta and gamma from the grid, and applies the pricer to re
 
 ## Part 2: Implied volatility
 
-**Data.** S&P 500 index options (European, cash-settled) from Yahoo Finance for expiries of 29, 60, 91 and 181 days. Prices are bid-ask mids; options with no quotes, spreads above 50% of the mid, or strikes outside 70–130% of the index level are removed. Index level 7,666.54; 3-month T-bill rate 3.98%; 90-day historical volatility 12.45%.
+**Data.** S&P 500 index options (European, cash-settled) from Yahoo Finance for expiries of 29, 60, 91 and 181 days. Prices are bid-ask mids; options with no quotes, spreads above 50% of the mid, or strikes outside 70–130% of the index level are removed. Index level 7,666.54 ( 3-month T-bill rate 3.98%, 90-day historical volatility 12.45%).
 
 **Method.**
 
@@ -86,7 +86,7 @@ The failure is not only that historical volatility looks backwards (the last six
 - **Snapshot data.** Quotes were downloaded on 1 October 2026 after the US close, so they are end-of-day rather than live. Results are a single snapshot.
 - **Implied dividend yield.** The yield backed out from parity is negative for short expiries (−1.55% at 29 days). It absorbs a small timing mismatch between the index close and option quotes and a difference between the T-bill rate and the rate implied in option prices. The forward price, which is what the model uses, is still taken from the options themselves, so implied volatilities are unaffected (confirmed by the parity check).
 - **Data noise.** A few isolated spikes in the longer-maturity skew curves come from duplicate or stale quotes, not real features.
-- **Hedging comparison.** Implied-volatility deltas assume each option's implied volatility stays fixed as the index moves; in sell-offs implied volatility tends to rise, so the true hedge would likely be larger still.
+- **Hedging comparison.** Implied-volatility deltas assume each option's implied volatility stays fixed as the index moves. In sell-offs implied volatility tends to rise, so the true hedge would likely be larger still.
 - **Numerical method.** The explicit scheme is simple and transparent but needs small time steps for stability. Crank-Nicolson would allow larger steps.
 
 ## Possible extensions
