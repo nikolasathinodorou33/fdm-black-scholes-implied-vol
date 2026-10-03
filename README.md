@@ -35,11 +35,42 @@ The Black-Scholes PDE is solved with an explicit finite difference scheme on a g
 
 **Stability.** The explicit scheme is stable only if σ²M²dt < 1 (all three weights stay positive). The test case gives 0.04; the solver in Part 2 increases the number of time steps automatically when needed.
 
-Part 1 also computes delta and gamma from the grid, and applies the pricer to real stocks (NVDA, AAPL, MSFT, TSLA, JPM) using 30-day, 90-day and 1-year historical volatility. FDM matches Black-Scholes to within a few cents in every case.
+### The Greeks: delta and gamma
+
+Both are read directly from the FDM grid using differences between neighbouring stock prices.
+
+**Delta** is the rate of change of the option price with respect to the stock price: how much the option's value changes when the stock moves by 1. It is also the number of shares a seller holds to hedge one option.
+
+![Delta](figures/delta.png)
+
+With the strike fixed at 100, delta rises from 0 to 1 as the stock price rises relative to the strike:
+
+- **Stock far below the strike (deep out of the money):** delta ≈ 0. The option will almost certainly expire worthless, so small stock moves barely change its value.
+- **Stock far above the strike (deep in the money):** delta ≈ 1. The option will almost certainly be exercised, so it moves one-for-one with the stock.
+- **Stock near the strike:** delta is a little above 0.5 (about 0.64 at S = 100). Interest makes the stock drift upwards in the model, so an at-the-money call is slightly more likely to finish in the money than not. The notebook reports delta = 0.617 at the nearest grid point, S = 99, matching Black-Scholes there (0.618).
+
+**Gamma** is the rate of change of delta with respect to the stock price: the curvature of the option price. It measures how quickly the hedge goes out of date as the stock moves.
+
+![Gamma](figures/gamma.png)
+
+Gamma is the slope of the delta curve, so it peaks where delta changes fastest. Far from the strike, the outcome is almost decided either way and delta is flat, so gamma is near zero. Near the strike, the outcome is finely balanced: a small move in the stock noticeably changes how likely the option is to be exercised, so delta changes quickly.
+
+The peak is at S ≈ 89.6, below the strike, for two reasons. Stock prices move in percentages, so a move of 1 is a larger percentage move at lower prices, which pushes gamma up on the left. And in the model the stock is expected to drift upwards over the year, so the point where the outcome is most balanced already sits below 100. Black-Scholes puts the peak at K·exp(−(r + 1.5σ²)T) = 100·exp(−0.11) ≈ 89.6, matching the FDM result. At S = 99, gamma = 0.0193 (Black-Scholes: 0.0193): delta rises by about 0.019 for each 1 increase in the stock price.
+
+As expiry approaches, the delta curve becomes steeper and the gamma peak narrower and taller, moving towards the strike: on the final day, delta jumps from 0 to 1 exactly at the strike.
+
+### Does the pricer behave as theory predicts?
+
+Beyond matching the exact formula, each sensitivity behaves as expected:
+
+- **Volatility.** The test call rises steadily from 6.83 at 10% volatility to 21.80 at 50%. More volatility means more chance of a large gain while the loss is capped at the premium. Because price always increases with volatility, each market price corresponds to exactly one implied volatility (used in Part 2). The FDM error falls as volatility rises (0.020 at 10%, 0.007 at 50%), because a smoother price curve is easier to approximate on a fixed grid.
+- **Maturity.** A one-month at-the-money NVDA call (S = 230.86, K = 230, σ = 39.4%) costs 11.18; at 3, 6 and 12 months it costs 19.42, 27.78 and 40.30. Price grows roughly with √T (11.18 × √3 ≈ 19.4, × √6 ≈ 27.4), since uncertainty grows with the square root of time; longer maturities sit slightly above this because of the interest effect on the strike. The FDM error also falls with maturity (0.020 at 1 month, 0.006 at 1 year), for the same smoothness reason: what controls the difficulty is σ√T.
+- **Across stocks.** For one-month at-the-money calls on five stocks, option price divided by stock price follows the rule of thumb 0.4 × σ × √T closely, from 2.3% for JPM (σ = 20.7%) to 6.1% for TSLA (σ = 52.9%). Small deviations are explained by strikes rounded slightly in or out of the money.
+- **Historical volatility window.** For NVDA the 30-day, 90-day and 1-year estimates (38.4%, 39.4%, 37.7%) give option prices of 10.93, 11.18 and 10.73: the price depends on which past window is chosen, and nothing in the model says which is right. Part 2 addresses this with market prices.
 
 ## Part 2: Implied volatility
 
-**Data.** S&P 500 index options (European, cash-settled) from Yahoo Finance for expiries of 29, 60, 91 and 181 days. Prices are bid-ask mids; options with no quotes, spreads above 50% of the mid, or strikes outside 70–130% of the index level are removed. Index level 7,666.54 ( 3-month T-bill rate 3.98%, 90-day historical volatility 12.45%).
+**Data.** S&P 500 index options (European, cash-settled) from Yahoo Finance for expiries of 29, 60, 91 and 181 days. Prices are bid-ask mids; options with no quotes, spreads above 50% of the mid, or strikes outside 70–130% of the index level are removed. Index level 7,666.54; 3-month T-bill rate 3.98%; 90-day historical volatility 12.45%.
 
 **Method.**
 
@@ -86,7 +117,7 @@ The failure is not only that historical volatility looks backwards (the last six
 - **Snapshot data.** Quotes were downloaded on 1 October 2026 after the US close, so they are end-of-day rather than live. Results are a single snapshot.
 - **Implied dividend yield.** The yield backed out from parity is negative for short expiries (−1.55% at 29 days). It absorbs a small timing mismatch between the index close and option quotes and a difference between the T-bill rate and the rate implied in option prices. The forward price, which is what the model uses, is still taken from the options themselves, so implied volatilities are unaffected (confirmed by the parity check).
 - **Data noise.** A few isolated spikes in the longer-maturity skew curves come from duplicate or stale quotes, not real features.
-- **Hedging comparison.** Implied-volatility deltas assume each option's implied volatility stays fixed as the index moves. In sell-offs implied volatility tends to rise, so the true hedge would likely be larger still.
+- **Hedging comparison.** Implied-volatility deltas assume each option's implied volatility stays fixed as the index moves; in sell-offs implied volatility tends to rise, so the true hedge would likely be larger still.
 - **Numerical method.** The explicit scheme is simple and transparent but needs small time steps for stability. Crank-Nicolson would allow larger steps.
 
 ## Possible extensions
