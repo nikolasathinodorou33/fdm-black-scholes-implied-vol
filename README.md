@@ -21,7 +21,7 @@ If Black-Scholes were right, implied volatility would be flat across strikes. In
 
 ## Background
 
-This project began as a **summer research project at UCL**, which built and validated an explicit finite difference pricer for Black-Scholes and applied it to real stocks using historical volatility (Part 1). It was then extended with an implied volatility analysis against real S&P 500 option prices (Part 2), which tests where pricing with historical volatility fails. The report lists exactly [what was in the original project and what was added](REPORT.md#project-scope-original-work-and-extension).
+This project began as a **summer research group project at UCL**, which built and validated an explicit finite difference pricer for Black-Scholes and applied it to real stocks using historical volatility (Part 1). It was then extended with an implied volatility analysis against real S&P 500 option prices (Part 2), which tests where pricing with historical volatility fails. The report lists exactly [what was in the original project and what was added](REPORT.md#project-scope-original-work-and-extension).
 
 ## What the project does
 
