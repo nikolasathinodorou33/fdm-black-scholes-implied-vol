@@ -8,7 +8,7 @@ A finite difference (FDM) solver for the Black-Scholes equation, validated again
 
 ## Project scope: original work and extension
 
-### Original project (summer research, UCL)
+### Original project (summer group research project, UCL)
 
 Sections 1–28 of the notebook:
 
