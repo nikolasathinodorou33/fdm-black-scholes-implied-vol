@@ -42,22 +42,26 @@ The Black-Scholes PDE is solved with an explicit finite difference scheme on a g
 
 | | Price |
 |---|---|
-| FDM (M = 100, N = 10,000) | 10.4658 |
+| FDM (M = 120, N = 12,000) | 10.4352 |
 | Black-Scholes formula | 10.4506 |
-| Absolute error | 0.0152 |
+| Absolute error | 0.0154 |
 
-**Convergence.** Halving the stock-price step reduces the error about four times, the second-order convergence expected from central differences:
+The grid uses dS = 2.5, so S = 100 is exactly a grid point and the price is read directly from the grid. If S = 100 fell between two grid points, the price would have to be read off a straight line between them. The option price curves upwards, so that straight line overstates the price, and its error would mix with the scheme's own error. In an earlier version (dS = 3), this interpolation added about +0.019 to an error of about −0.003 from the scheme.
+
+**Convergence.** Each grid below keeps S = 100 on a grid point. Halving the stock-price step reduces the error four times, the second-order convergence expected from central differences. The observed order between successive grids is 2.06, 2.02 and 2.01:
 
 | M | dS | Absolute error |
 |---|---|---|
-| 20 | 15.0 | 0.4308 |
-| 50 | 6.0 | 0.0633 |
-| 100 | 3.0 | 0.0152 |
-| 200 | 1.5 | 0.0039 |
+| 30 | 10.0 | 0.2604 |
+| 60 | 5.0 | 0.0623 |
+| 120 | 2.5 | 0.0154 |
+| 240 | 1.25 | 0.0038 |
+
+The size of the error also depends on where the strike sits relative to the grid. The payoff has a sharp corner at the strike, and the scheme approximates it more accurately when the corner falls between grid points than when it falls on one. Comparisons of accuracy are therefore only fair between grids that treat the strike in the same way, as these do.
 
 ![Convergence](figures/convergence_loglog.png)
 
-**Stability.** The explicit scheme is stable only if σ²M²dt < 1 (all three weights stay positive). The test case gives 0.04, and the solver in Part 2 increases the number of time steps automatically when needed.
+**Stability.** The explicit scheme is stable only if σ²M²dt < 1 (all three weights stay positive). The test case gives 0.048, and the solver in Part 2 increases the number of time steps automatically when needed.
 
 ### The Greeks: delta and gamma
 
@@ -71,7 +75,7 @@ With the strike fixed at 100, delta rises from 0 to 1 as the stock price rises r
 
 - **Stock far below the strike (deep out of the money):** delta ≈ 0. The option will almost certainly expire worthless, so small stock moves barely change its value.
 - **Stock far above the strike (deep in the money):** delta ≈ 1. The option will almost certainly be exercised, so it moves one-for-one with the stock.
-- **Stock near the strike:** delta is a little above 0.5 (about 0.64 at S = 100). Interest makes the stock drift upwards in the model, so an at-the-money call is slightly more likely to finish in the money than not. The notebook reports delta = 0.617 at the nearest grid point, S = 99, matching Black-Scholes there (0.618).
+- **Stock near the strike:** delta is a little above 0.5: the FDM gives 0.6364 at S = 100 (Black-Scholes: 0.6368). Interest makes the stock drift upwards in the model, so an at-the-money call is slightly more likely to finish in the money than not.
 
 **Gamma** is the rate of change of delta with respect to the stock price: the curvature of the option price. It measures how quickly the hedge goes out of date as the stock moves.
 
@@ -79,19 +83,19 @@ With the strike fixed at 100, delta rises from 0 to 1 as the stock price rises r
 
 Gamma is the slope of the delta curve, so it peaks where delta changes fastest. Far from the strike, the outcome is almost decided either way and delta is flat, so gamma is near zero. Near the strike, the outcome is finely balanced: a small move in the stock noticeably changes how likely the option is to be exercised, so delta changes quickly.
 
-The peak is at S ≈ 89.6, below the strike, for two reasons. First, delta depends on where the stock sits *relative to* the strike, in percentage terms, not in absolute points. A move of 1 is a bigger percentage move at a lower price (1.25% at S = 80, 0.83% at S = 120), so it shifts the stock-to-strike ratio more and changes delta more. That pushes gamma up on the left. And in the model the stock drifts upwards over time with the interest rate: starting at 100 it has about a 56% chance of finishing above the strike, not 50%. A true 50/50 outcome needs a starting price slightly below the strike (about 97 here), so the region where the outcome is most finely balanced already sits below 100. Black-Scholes puts the peak at K·exp(−(r + 1.5σ²)T) = 100·exp(−0.11) ≈ 89.6, matching the FDM result. At S = 99, gamma = 0.0193 (Black-Scholes: 0.0193): delta rises by about 0.019 for each 1 increase in the stock price.
+The peak is at S ≈ 89.6, below the strike, for two reasons. First, delta depends on where the stock sits *relative to* the strike, in percentage terms, not in absolute points. A move of 1 is a bigger percentage move at a lower price (1.25% at S = 80, 0.83% at S = 120), so it shifts the stock-to-strike ratio more and changes delta more. That pushes gamma up on the left. And in the model the stock drifts upwards over time with the interest rate: starting at 100 it has about a 56% chance of finishing above the strike, not 50%. A true 50/50 outcome needs a starting price slightly below the strike (about 97 here), so the region where the outcome is most finely balanced already sits below 100. Black-Scholes puts the peak at K·exp(−(r + 1.5σ²)T) = 100·exp(−0.11) ≈ 89.6, and the FDM peak is at S = 90, the nearest grid point. At S = 100, gamma = 0.0188 (Black-Scholes: 0.0188): delta rises by about 0.019 for each 1 increase in the stock price.
 
 **As expiry approaches.** The grid stores the option value at every time step, so delta and gamma can be read off at any date:
 
 ![Delta and gamma as expiry approaches](figures/greeks_vs_expiry.png)
 
-With less time left, the delta curve becomes steeper and the gamma peak narrower, taller and closer to the strike: about 0.022 at S ≈ 90 with 1 year left, 0.040 at S ≈ 97 with 3 months, and 0.070 at S ≈ 99 with 1 month. With little time, the stock can only move a short distance, so whether the option ends up exercised is decided almost entirely by which side of the strike it is on. In the limit, at expiry, delta jumps from 0 to 1 exactly at the strike. For an option seller, high gamma near expiry means the hedge must be adjusted very frequently when the stock is close to the strike.
+With less time left, the delta curve becomes steeper and the gamma peak narrower, taller and closer to the strike: about 0.022 at S = 90 with 1 year left, 0.041 at S = 97.5 with 3 months, and 0.071 at S = 100 with 1 month (the peaks are read at grid points 2.5 apart). With little time, the stock can only move a short distance, so whether the option ends up exercised is decided almost entirely by which side of the strike it is on. In the limit, at expiry, delta jumps from 0 to 1 exactly at the strike. For an option seller, high gamma near expiry means the hedge must be adjusted very frequently when the stock is close to the strike.
 
 ### Does the pricer behave as theory predicts?
 
 Beyond matching the exact formula, each sensitivity behaves as expected:
 
-- **Volatility.** The test call rises steadily from 6.83 at 10% volatility to 21.80 at 50%. More volatility means more chance of a large gain while the loss is capped at the premium. Because price always increases with volatility, each market price corresponds to exactly one implied volatility (used in Part 2). The FDM error falls as volatility rises (0.020 at 10%, 0.007 at 50%), because a smoother price curve is easier to approximate on a fixed grid. Compared with the payoff (the hockey stick with a sharp corner at the strike), the value curve today at 10% volatility stays close to that corner and bends sharply around the strike (value about 6.8 at S = 100), while at 50% it is lifted well above it and bends gently over a wide range of stock prices (about 21.8 at S = 100). The FDM estimates the curvature from three grid points 3 apart, which captures a gentle bend more accurately than a sharp one.
+- **Volatility.** The test call rises steadily from 6.80 at 10% volatility to 21.79 at 50% (Black-Scholes values). More volatility means more chance of a large gain while the loss is capped at the premium. Because price always increases with volatility, each market price corresponds to exactly one implied volatility (used in Part 2). The FDM error falls as volatility rises (0.034 at 10%, 0.005 at 50%), because a smoother price curve is easier to approximate on a fixed grid. Compared with the payoff (the hockey stick with a sharp corner at the strike), the value curve today at 10% volatility stays close to that corner and bends sharply around the strike (value about 6.8 at S = 100), while at 50% it is lifted well above it and bends gently over a wide range of stock prices (about 21.8 at S = 100). The FDM estimates the curvature from three grid points 2.5 apart, which captures a gentle bend more accurately than a sharp one.
 - **Maturity.** A one-month at-the-money NVDA call (S = 230.86, K = 230, σ = 39.4%) costs 11.18. At 3, 6 and 12 months it costs 19.42, 27.78 and 40.30. More time gives the stock more room to move, but uncertainty grows with the square root of time, not time itself, so the price grows roughly with √T: 11.18 × √3 ≈ 19.4 and 11.18 × √6 ≈ 27.4. Longer maturities sit slightly above this rule because paying the strike later is worth more over a longer period.
 
   The FDM error also falls with maturity, from 0.020 at 1 month to 0.006 at 1 year. With little time left, the value curve today is still close to the payoff's sharp corner at the strike, which is harder to approximate on the grid. With more time, it becomes smoother. Volatility and time have the same smoothing effect, and they act together through σ√T, the typical percentage move of the stock before expiry: the smaller σ√T, the sharper the curve and the larger the error.

@@ -25,7 +25,7 @@ This project began as a **summer research group project at UCL**, which built an
 
 ## What the project does
 
-1. **Builds and validates the pricer.** An explicit finite difference scheme for the Black-Scholes PDE, matching the exact formula (10.4658 vs 10.4506) with second-order convergence. Delta and gamma are read from the grid.
+1. **Builds and validates the pricer.** An explicit finite difference scheme for the Black-Scholes PDE, matching the exact formula (10.4352 vs 10.4506) with second-order convergence (observed order 2.0). Delta and gamma are read from the grid.
 2. **Applies it to real stocks** (NVDA, AAPL, MSFT, TSLA, JPM) using historical volatility, checking that prices respond to volatility, maturity and moneyness as theory predicts.
 3. **Tests it against the market.** Downloads S&P 500 option prices, extracts implied volatility (Newton's method with a Brent fallback), and measures, strike by strike, how far historical-volatility prices are from market prices, and what that means for hedging.
 
@@ -35,7 +35,9 @@ This project began as a **summer research group project at UCL**, which built an
 pip install -r requirements.txt
 ```
 
-Open `fdm_black_scholes_implied_vol.ipynb` in Jupyter, VS Code or Google Colab and run all cells. For live option prices, run during US market hours (14:30–21:00 UK time). Results in the report reflect a snapshot from 1 October 2026.
+Tested with Python 3.9 and the library versions in `requirements.txt`.
+
+Open `fdm_black_scholes_implied_vol.ipynb` in Jupyter, VS Code or Google Colab and run all cells. For live option prices, run during US market hours (14:30–21:00 UK time). Results in the report reflect a snapshot from 1 October 2026. That snapshot of option prices was not saved, so running the live-data cells today downloads current prices and gives different market numbers. Part 1 (the pricer, its validation, convergence and Greeks) uses no live data and reproduces exactly.
 
 ## Repository contents
 
